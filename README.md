@@ -21,7 +21,7 @@ May also set different `API_PORT` for multiple consumers.
 
     API_PORT=8001 go run cmd/consumer/main.go
 
-# Send Signal
+# Gracefully Shutdown
 
 Find the process ID of this API by port
 
@@ -39,7 +39,7 @@ Or one-liner
 
 ## Producer
 
-Send a task by sending an http request
+Send a task by sending an http request to a Producer. In production, send the request to a load balancer that does reverse proxy between your producers.
 
     curl --location --request POST 'http://0.0.0.0:4001/api/v1/email' \
     --header 'Content-Type: application/json' \
@@ -53,7 +53,11 @@ Send a task by sending an http request
         }
     }'
 
+## Consumer
+
 The consumer server will automatically pick up the task from Redis.
+
+# Monitor
 
 Run `asynq stats` or [`asynqmon`](#asynqmon) [http://localhost:8080/](http://localhost:8080/) and you will see succeeded tasks.
 
