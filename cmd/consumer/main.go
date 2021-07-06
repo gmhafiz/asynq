@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/hibiken/asynq"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/hibiken/asynq"
+
 	"tasks/internal/server"
 	"tasks/tasks"
 	"tasks/tasks/email"

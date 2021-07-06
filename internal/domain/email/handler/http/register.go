@@ -5,7 +5,6 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"tasks/internal/domain/email"
-
 )
 
 func RegisterHTTPEndPoints(router *chi.Mux, validator *validator.Validate, uc email.UseCase) {

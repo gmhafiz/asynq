@@ -8,14 +8,13 @@ import (
 type Request struct {
 	Subject      string `json:"subject" validate:"required"`
 	Content      string `json:"content" validate:"required"`
-	//Status       string `json:"status"`
 	SentByUserID uint64 `json:"sent_by"`
 }
 
 type RefereeRequest struct {
 	Request
-	Parameters   Parameter `json:"parameters" validate:"required"`
-	Type string `json:"type" validate:"required"`
+	Parameters Parameter `json:"parameters" validate:"required"`
+	Type       string    `json:"type" validate:"required"`
 }
 
 type Parameter struct {

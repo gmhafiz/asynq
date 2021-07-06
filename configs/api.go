@@ -8,7 +8,7 @@ import (
 )
 
 type Api struct {
-	Name              string        `default:"dribl_queue"`
+	Name              string `default:"dribl_queue"`
 	Host              net.IP
 	Port              string
 	ReadTimeout       time.Duration `default:"5s"`

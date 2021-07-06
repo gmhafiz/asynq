@@ -17,7 +17,7 @@ type Handler struct {
 
 func NewHandler(uc email.UseCase, validate *validator.Validate) *Handler {
 	return &Handler{
-		useCase: uc,
+		useCase:  uc,
 		validate: validate,
 	}
 }

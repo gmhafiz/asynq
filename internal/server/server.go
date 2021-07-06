@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/hibiken/asynq"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +13,7 @@ import (
 	chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
 
 	"tasks/configs"
@@ -45,7 +45,6 @@ func (s *Server) Init() {
 	s.setGlobalMiddleware()
 	s.initDomains()
 }
-
 
 func (s *Server) Run() error {
 	s.httpServer = &http.Server{
@@ -84,20 +83,6 @@ func (s *Server) Run() error {
 	defer shutdown()
 
 	return s.httpServer.Shutdown(ctx)
-}
-
-// NewTimer creates a timer that runs for a specified number of seconds.
-// When timer finishes, it calls the action function supplied.
-// Use the returned timer object to stop the timer early, if needed.
-func NewTimer(seconds int, action func()) *time.Timer {
-	timer := time.NewTimer(time.Second * time.Duration(seconds))
-
-	go func() {
-		<-timer.C
-		action()
-	}()
-
-	return timer
 }
 
 func (s *Server) newConfig() {

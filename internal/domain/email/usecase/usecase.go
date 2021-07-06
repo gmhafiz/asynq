@@ -3,10 +3,12 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"github.com/hibiken/asynq"
 	"log"
+
+	"github.com/hibiken/asynq"
+
 	"tasks/internal/domain/email"
-	email2 "tasks/tasks/email"
+	emailTask "tasks/tasks/email"
 )
 
 type Email struct {
@@ -18,7 +20,7 @@ func New(redis *asynq.Client) *Email {
 }
 
 func (u *Email) Send(ctx context.Context, req email.RefereeRequest) error {
-	task, err := email2.NewEmailDeliveryTask(int(req.Request.SentByUserID), "")
+	task, err := emailTask.NewEmailDeliveryTask(int(req.Request.SentByUserID), "")
 	if err != nil {
 		return fmt.Errorf("could not create task: %v", err)
 	}
@@ -32,4 +34,3 @@ func (u *Email) Send(ctx context.Context, req email.RefereeRequest) error {
 
 	return nil
 }
-

@@ -19,4 +19,3 @@ func DataStore() Database {
 
 	return db
 }
-

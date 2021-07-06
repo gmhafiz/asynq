@@ -22,4 +22,3 @@ func Alive(db *sql.DB) {
 		time.Sleep(1 * time.Second)
 	}
 }
-
