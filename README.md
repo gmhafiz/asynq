@@ -4,6 +4,17 @@ An example of [asynq](https://github.com/hibiken/asynq) producer and consumer th
 
 Go version >= 1.13
 
+## Protobuf 
+
+To use protobuf, install protobuf compiler [https://grpc.io/docs/protoc-installation/](https://grpc.io/docs/protoc-installation/) and its Go library 
+
+    go install google.golang.org/protobuf/cmd/protoc-gen-go
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+Add to `PATH`
+
+    export PATH="$PATH:$(go env GOPATH)/bin"
+
 # Run
 
 We can build two kind of binaries from this same codebase, producer and consumer.

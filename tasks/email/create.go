@@ -3,8 +3,8 @@ package email
 import (
 	"encoding/json"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/hibiken/asynq"
+	"google.golang.org/protobuf/proto"
 
 	delivery_v1 "tasks/api/v1"
 	"tasks/tasks"
@@ -34,7 +34,7 @@ func NewEmailDeliveryTask(userID int, tmplID string) (*asynq.Task, error) {
 	// msgpack, thus saving RAM in Redis server.
 	// But you cannot inspect a protobuf encoded binary in asynqmon
 	msg := &delivery_v1.Delivery{
-		UserID: int64(userID),
+		UserID:     int64(userID),
 		TemplateID: tmplID,
 	}
 	payload, err := proto.Marshal(msg)

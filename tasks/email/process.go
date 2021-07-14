@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	"log"
-	delivery_v1 "tasks/api/v1"
 
 	"github.com/hibiken/asynq"
+	"google.golang.org/protobuf/proto"
+
+	delivery_v1 "tasks/api/v1"
 )
 
 //---------------------------------------------------------------
