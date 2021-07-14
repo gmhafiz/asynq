@@ -95,3 +95,8 @@ Run
     asynqmon
 
     
+# Git hooks
+
+Add git hooks by registering the path to `.git-hooks` folder
+
+    git config core.hooksPath .git-hooks
