@@ -7,7 +7,13 @@ package api.v1;
 option go_package = "tasks/delivery_v1";
 
 message Delivery {
-  int64 userID = 1;
-  string templateID = 2;
+  int64 sentBy = 1;
+  string type = 2;
+  email email = 3;
+}
 
+message email {
+  string subject = 1;
+  string content = 2;
+  int64 to = 3;
 }

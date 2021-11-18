@@ -22,7 +22,7 @@ func NewHandler(uc email.UseCase, validate *validator.Validate) *Handler {
 	}
 }
 
-// Send Send an email with payload
+// Send an email with payload
 // @Summary
 // @Description
 // @Success 200
@@ -51,6 +51,5 @@ func (h *Handler) Send(w http.ResponseWriter, r *http.Request) {
 		}
 	default:
 		respond.Error(w, http.StatusBadRequest, errs)
-
 	}
 }

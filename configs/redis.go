@@ -1,13 +1,11 @@
 package configs
 
 import (
-	"net"
-
 	"github.com/kelseyhightower/envconfig"
 )
 
 type Redis struct {
-	Host      net.IP
+	Host      string
 	Port      string
 	Addresses string
 	Name      int

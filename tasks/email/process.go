@@ -3,13 +3,12 @@ package email
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/hibiken/asynq"
-	"google.golang.org/protobuf/proto"
+	"github.com/jmoiron/sqlx"
 
-	delivery_v1 "tasks/api/v1"
+	deliveryV1 "tasks/api/v1"
 )
 
 //---------------------------------------------------------------
@@ -20,17 +19,31 @@ import (
 // that satisfies asynq.Handler interface. See examples below.
 //---------------------------------------------------------------
 
-func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error {
-	// example decoding a protobuf encoded payload
-	var p delivery_v1.Delivery
-	err := proto.Unmarshal(t.Payload(), &p)
-	if err != nil {
-		return err
+// Processor implements asynq.Handler interface.
+type Processor struct {
+	db *sqlx.DB
+}
+
+func NewEmailProcessor(db *sqlx.DB) *Processor {
+	// ... return an instance
+	return &Processor{
+		db: db,
 	}
+}
+
+func (p Processor) ProcessTask(ctx context.Context, task *asynq.Task) error {
+	// example decoding a protobuf encoded payload
+	//var p delivery_v1.Delivery
+	//err := proto.Unmarshal(t.Payload(), &p)
+	//if err != nil {
+	//	return err
+	//}
 
 	// example decoding a JSON payload
-	//var p DeliveryPayload
-	//if err := json.Unmarshal(t.Payload(), &p); err != nil {
+	var payload deliveryV1.Delivery
+	if err := json.Unmarshal(task.Payload(), &p); err != nil {
+		return err
+	}
 
 	// example decoding a msgpack encoded payload
 	//var p DeliveryPayload
@@ -38,28 +51,16 @@ func HandleEmailDeliveryTask(ctx context.Context, t *asynq.Task) error {
 	//	return fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
 	//}
 
-	log.Printf("Sending Email to User: user_id=%d, template_id=%s", p.UserID, p.TemplateID)
 	// Email delivery code ...
-	return nil
-}
 
-// ImageProcessor implements asynq.Handler interface.
-type ImageProcessor struct {
-	// ... fields for struct
-	SourceURL string
-}
+	log.Printf("Sending Email to User: user_id=%d, From=%d", payload.Email.To, payload.SentBy)
 
-func (p *ImageProcessor) ProcessTask(ctx context.Context, t *asynq.Task) error {
-	//var payload ImageResizePayload
-	if err := json.Unmarshal(t.Payload(), &p); err != nil {
-		return fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
+	log.Println(task.ResultWriter().TaskID())
+
+	_, err := p.db.ExecContext(ctx, "SELECT true;")
+	if err != nil {
+		log.Println("error performing database operation: %w", err)
 	}
-	log.Printf("Resizing image: src=%s", p.SourceURL)
-	// Image resizing code ...
-	return nil
-}
 
-func NewImageProcessor() *ImageProcessor {
-	// ... return an instance
 	return nil
 }

@@ -1,7 +1,7 @@
 package configs
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/joho/godotenv"
 )
@@ -15,7 +15,7 @@ type Configs struct {
 func New() *Configs {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
 	return &Configs{

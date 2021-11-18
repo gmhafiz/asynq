@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -23,12 +24,14 @@ import (
 )
 
 type Server struct {
-	cfg        *configs.Configs
-	db         *sqlx.DB
-	redis      *asynq.Client
-	router     *chi.Mux
-	httpServer *http.Server
-	validator  *validator.Validate
+	cfg            *configs.Configs
+	db             *sqlx.DB
+	redis          *asynq.Client
+	router         *chi.Mux
+	httpServer     *http.Server
+	validator      *validator.Validate
+	redisClientOpt asynq.RedisClientOpt
+	srv            *asynq.Server
 }
 
 func New(version string) *Server {
@@ -39,7 +42,7 @@ func New(version string) *Server {
 func (s *Server) Init() {
 	s.newConfig()
 	s.newDatabase()
-	s.newRedis()
+	s.newAsynq()
 	s.newValidator()
 	s.newRouter()
 	s.setGlobalMiddleware()
@@ -119,14 +122,40 @@ func (s *Server) initDomains() {
 	s.initEmail()
 }
 
-func (s *Server) newRedis() {
-	// for single redis instance
-	s.redis = asynq.NewClient(asynq.RedisClientOpt{Addr: fmt.Sprintf("%s:%s", s.cfg.Redis.Host, s.cfg.Redis.Port)})
+func (s *Server) newAsynq() {
+	// defaults to connecting to Redis cluster if setting is set.
+	//nolint:staticcheck srv is used through its public getter AsyncServer()
+	srv := &asynq.Server{}
 
-	// for connecting to the Redis cluster
-	//redis := asynq.NewClient(asynq.RedisClusterClientOpt{Addrs: []string{
-	//	"0.0.0.0:7000", "0.0.0.0:7001", "0.0.0.0:7002",
-	//}})
+	cfg := asynq.Config{
+		// Specify how many concurrent workers to use
+		Concurrency: 10,
+		// Optionally specify multiple queues with different priority.
+		Queues: map[string]int{
+			"critical": 6,
+			"default":  3,
+			"low":      1,
+		},
+	}
+
+	if s.cfg.Redis.Addresses != "" {
+		srv = asynq.NewServer(
+			// (Option 1) for connecting to the Redis cluster
+			asynq.RedisClusterClientOpt{Addrs: strings.Split(s.cfg.Redis.Addresses, ",")},
+			cfg,
+		)
+	} else if s.cfg.Redis.Host != "" && s.cfg.Redis.Port != "" {
+		srv = asynq.NewServer(
+			// (Option 2) for single redis instance
+			asynq.RedisClientOpt{Addr: fmt.Sprintf("%s:%s", s.cfg.Redis.Host, s.cfg.Redis.Port)},
+			cfg,
+		)
+	} else {
+		log.Fatal("must set redis credentials")
+	}
+
+	s.redis = asynq.NewClient(s.redisClientOpt)
+	s.srv = srv
 }
 
 func printAllRegisteredRoutes(router *chi.Mux) {
@@ -145,4 +174,8 @@ func (s *Server) Config() *configs.Configs {
 
 func (s *Server) DB() *sqlx.DB {
 	return s.db
+}
+
+func (s *Server) AsynqServer() *asynq.Server {
+	return s.srv
 }

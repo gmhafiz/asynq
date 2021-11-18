@@ -2,7 +2,7 @@ An example of [asynq](https://github.com/hibiken/asynq) producer and consumer th
 
 # Requirement
 
-Go version >= 1.13
+Go version >= 1.14
 
 ## Protobuf 
 
@@ -66,16 +66,16 @@ Send a task by sending an http request to a Producer. In production, send the re
 
 ## Consumer
 
-The consumer server will automatically pick up the task from Redis.
+The consumer server(s) will automatically pick up the task from Redis.
 
 # Monitor
 
-Run `asynq stats` or [`asynqmon`](#asynqmon) [http://localhost:8080/](http://localhost:8080/) and you will see succeeded tasks.
+Run `asynq stats` or [`asynqmon`](#asynqmon) [http://localhost:8080/](http://localhost:8080/) and you will see tasks being process, succeeded, or failed tasks.
 
-To verify, put breakdowns on the appropriate places to see the flow of the program.
+![inspect-pyload](assets/asynqmon-inspect-payload.png)
+Payload can be inspected in this asynqmon web UI if payload is serialized with JSON.
 
-
-# asynqmon
+## asynqmon
 
 Install
 

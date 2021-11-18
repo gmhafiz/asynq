@@ -15,6 +15,6 @@ func (s *Server) initHealth() {
 }
 
 func (s *Server) initEmail() {
-	newEmailUseCase := emailUseCase.New(s.redis)
+	newEmailUseCase := emailUseCase.New(s.redis, s.DB())
 	emailHandler.RegisterHTTPEndPoints(s.router, s.validator, newEmailUseCase)
 }
