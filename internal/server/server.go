@@ -51,7 +51,7 @@ func (s *Server) Init() {
 
 func (s *Server) Run() error {
 	s.httpServer = &http.Server{
-		Addr:           s.cfg.Api.Host.String() + ":" + s.cfg.Api.Port,
+		Addr:           fmt.Sprintf("%s:%d", s.cfg.Api.Host, s.cfg.Api.Port),
 		Handler:        s.router,
 		ReadTimeout:    s.cfg.Api.ReadTimeout,
 		WriteTimeout:   s.cfg.Api.WriteTimeout,
@@ -62,7 +62,7 @@ func (s *Server) Run() error {
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
 
 	go func() {
-		log.Printf("Serving at %s:%s\n", s.cfg.Api.Host, s.cfg.Api.Port)
+		log.Printf("Serving at %s:%d\n", s.cfg.Api.Host, s.cfg.Api.Port)
 		printAllRegisteredRoutes(s.router)
 		err := s.httpServer.ListenAndServe()
 		if err != nil {
@@ -123,9 +123,9 @@ func (s *Server) initDomains() {
 }
 
 func (s *Server) newAsynq() {
-	// defaults to connecting to Redis cluster if setting is set.
-	//nolint:staticcheck srv is used through its public getter AsyncServer()
-	srv := &asynq.Server{}
+	// Defaults to connecting to Redis cluster if setting is set.
+	// srv is used through its public getter AsyncServer().
+	srv := &asynq.Server{} //nolint:staticcheck
 
 	cfg := asynq.Config{
 		// Specify how many concurrent workers to use
