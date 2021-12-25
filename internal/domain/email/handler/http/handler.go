@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"tasks/tasks"
 
 	"github.com/go-playground/validator/v10"
 
@@ -43,7 +44,7 @@ func (h *Handler) Send(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch req.Type {
-	case "referee":
+	case tasks.TypeEmailDelivery:
 		err = h.useCase.Send(r.Context(), req)
 		if err != nil {
 			respond.Error(w, http.StatusInternalServerError, nil)
