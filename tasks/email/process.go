@@ -3,12 +3,13 @@ package email
 import (
 	"context"
 	"encoding/json"
+	"tasks/internal/domain/email"
+
 	"log"
 
 	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
-
-	deliveryV1 "tasks/api/v1"
+	//deliveryV1 "tasks/api/v1"
 )
 
 //---------------------------------------------------------------
@@ -40,20 +41,20 @@ func (p Processor) ProcessTask(ctx context.Context, task *asynq.Task) error {
 	//}
 
 	// example decoding a JSON payload
-	var payload deliveryV1.Delivery
-	if err := json.Unmarshal(task.Payload(), &p); err != nil {
+	var r email.RefereeRequest
+	if err := json.Unmarshal(task.Payload(), &r); err != nil {
 		return err
 	}
 
 	// example decoding a msgpack encoded payload
-	//var p DeliveryPayload
-	//if err := msgpack.Unmarshal(t.Payload(), &p); err != nil {
+	//var r email.RefereeRequest
+	//if err := msgpack.Unmarshal(task.Payload(), &r); err != nil {
 	//	return fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
 	//}
 
 	// Email delivery code ...
 
-	log.Printf("Sending Email to User: user_id=%d, From=%d", payload.Email.To, payload.SentBy)
+	log.Printf("Sending Email to User: user_id=%d, From=%d", r.Parameters.To, r.SentByUserID)
 
 	log.Println(task.ResultWriter().TaskID())
 
@@ -61,6 +62,8 @@ func (p Processor) ProcessTask(ctx context.Context, task *asynq.Task) error {
 	if err != nil {
 		log.Println("error performing database operation: %w", err)
 	}
+
+	log.Printf("Completed Processing Task ID: %v", task.ResultWriter().TaskID())
 
 	return nil
 }
