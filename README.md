@@ -15,6 +15,24 @@ Add to `PATH`
 
     export PATH="$PATH:$(go env GOPATH)/bin"
 
+## Redis
+
+The tasks you create are queued to Redis by a producer and those tasks are
+popped from the Redis queue by a consumer. These microservices can work with
+a single Redis instance or a Redis Cluster. Create either and set the credentials
+in `.env`.
+
+For a single Redis instance
+```bash
+REDIS_HOST=0.0.0.0
+REDIS_PORT=6379
+```
+
+For Redis Cluster, set the url separated by a comma.
+```bash
+REDIS_ADDRESS=localhost:7001,localhost:7002,localhost:7003,localhost:7004,localhost:7005,localhost:7006
+```
+
 # Run
 
  - (Optional) Database
