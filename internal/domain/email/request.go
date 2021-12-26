@@ -19,7 +19,7 @@ type Request struct {
 	// While we send it by header request, we pass along the request UUID
 	// so that we can later delete this key once the task is successfully
 	// completed.
-	RequestUUID string `json:"request_id" validate:"uuid4,required"`
+	UUID string `json:"request_uuid" validate:"uuid4,required"`
 }
 
 // RefereeRequest user request is parsed into this struct and is different

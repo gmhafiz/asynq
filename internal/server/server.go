@@ -45,9 +45,9 @@ func New(version string) *Server {
 	return &Server{}
 }
 
-// Init initializes all dependencies. Order of initialization is important.
-// Configuration parsing is usually the first thing that happens so that all
-// other dependencies can be configured correctly.
+// Init initializes all dependencies for Producer APIs. Order of initialization
+// is important. Configuration parsing is usually the first thing that happens
+// so that all other dependencies can be configured correctly.
 // GlobalMiddlewares happens before route registration and after router
 // initialization.
 //
@@ -61,6 +61,13 @@ func (s *Server) Init() {
 	s.newRouter()
 	s.setGlobalMiddleware()
 	s.initDomains()
+}
+
+// InitConsumer initialize settings specific to Consumer APIs
+func (s *Server) InitConsumer() {
+	s.newConfig()
+	s.newDatabase()
+	s.newAsynq()
 }
 
 // Run runs the server. There is a graceful shutdown mechanism that listens
@@ -79,7 +86,7 @@ func (s *Server) Run() {
 	// errs is an unbuffered channel that holds all errors of our go-routines.
 	errs := make(chan error)
 
-	// Launc go routine that starts the Producer API
+	// Launch go routine that starts the Producer API
 	go func() {
 		log.Printf("Serving at %s:%d\n", s.cfg.Api.Host, s.cfg.Api.Port)
 		printAllRegisteredRoutes(s.router)

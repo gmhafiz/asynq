@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"tasks/internal/domain/email"
-
 	"log"
 
 	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
+
 	//deliveryV1 "tasks/api/v1"
+	"tasks/internal/domain/email"
 )
 
 //---------------------------------------------------------------

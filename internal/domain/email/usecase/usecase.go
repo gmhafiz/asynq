@@ -3,30 +3,31 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"log"
-	"time"
-
 	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
+	"log"
+	"time"
 
 	"tasks/internal/domain/email"
 	emailTask "tasks/task/email"
 )
 
 type Email struct {
-	redis *asynq.Client
-	db    *sqlx.DB
+	asynqClient *asynq.Client
+	db          *sqlx.DB
 }
 
 // New is the Use Case layer where all business logic are implemented.
-func New(redis *asynq.Client, db *sqlx.DB) *Email {
+func New(client *asynq.Client, db *sqlx.DB) *Email {
 	return &Email{
-		redis: redis,
-		db:    db,
+		asynqClient: client,
+		db:          db,
 	}
 }
 
 func (u *Email) Send(ctx context.Context, req email.RefereeRequest) error {
+	log.Printf("processing: %s\n", req.UUID)
+
 	task, err := emailTask.NewEmailDeliveryTask(ctx, req)
 	if err != nil {
 		return fmt.Errorf("could not create task: %w", err)
@@ -53,7 +54,12 @@ func (u *Email) Send(ctx context.Context, req email.RefereeRequest) error {
 	// The TaskID() option ensures idempotency by allowing only UoW identified
 	// by its UUID. It is tracked by redis, so we already achieved a distributed
 	// lock on the UUID key.
-	info, err := u.redis.EnqueueContext(ctx, task, asynq.Unique(5*time.Minute))
+	// Retention() keeps the UUID in Redis thus preventing the same request with
+	// the same UUID to be run again.
+	info, err := u.asynqClient.EnqueueContext(ctx, task,
+		asynq.TaskID(req.UUID),
+		asynq.Retention(5*time.Minute),
+	)
 	if err != nil {
 		return fmt.Errorf("could not enqueue task: %w", err)
 	}

@@ -27,7 +27,7 @@ const Version = "v0.1.0"
 // below.
 func main() {
 	s := server.New(Version)
-	s.Init()
+	s.InitConsumer()
 
 	// mux maps a type to a handler
 	mux := asynq.NewServeMux()

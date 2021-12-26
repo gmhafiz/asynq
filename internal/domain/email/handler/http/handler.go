@@ -56,7 +56,7 @@ func (h *Handler) Send(w http.ResponseWriter, r *http.Request) {
 
 	// Save the request ID so that we can delete from Redis when it is
 	// successful to ensure message idempotency.
-	req.RequestUUID = r.Header.Get("X-Request-ID")
+	req.UUID = r.Header.Get("X-Request-ID")
 
 	errs := validate.Validate(h.validate, req)
 	if errs != nil {
