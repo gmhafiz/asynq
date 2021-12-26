@@ -2,12 +2,12 @@ package email
 
 import (
 	"encoding/json"
-	//"encoding/json"
-	"tasks/tasks"
 
 	"github.com/hibiken/asynq"
+
 	//deliveryV1 "tasks/api/v1"
 	"tasks/internal/domain/email"
+	"tasks/tasks"
 )
 
 //type DeliveryPayload struct {
