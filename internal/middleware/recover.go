@@ -10,6 +10,10 @@ import (
 )
 
 // Recovery adapted from https://github.com/go-chi/chi/blob/master/middleware/recoverer.go
+// Panic can still happen. This middleware intercepts all panics and handles
+// them by logging, and optionally send the error somewhere else.
+//
+// Handling them prevents the whole API from shutting down.
 func Recovery(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {

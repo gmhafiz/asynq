@@ -7,6 +7,9 @@ import (
 	"tasks/internal/domain/email"
 )
 
+// RegisterHTTPEndPoints is where you define API routes.
+// This function can receive any number of dependencies and pass them down to
+// where it needs them.
 func RegisterHTTPEndPoints(router *chi.Mux, validator *validator.Validate, uc email.UseCase) {
 	h := NewHandler(uc, validator)
 

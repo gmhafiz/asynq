@@ -10,7 +10,7 @@ type Database struct {
 	User              string
 	Pass              string
 	SslMode           string `default:"disable"`
-	MaxConnectionPool int
+	MaxConnectionPool int    // ideally number of threads + spindle count
 }
 
 func DataStore() Database {

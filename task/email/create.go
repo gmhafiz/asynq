@@ -1,13 +1,14 @@
 package email
 
 import (
+	"context"
 	"encoding/json"
+	"tasks/task"
 
 	"github.com/hibiken/asynq"
 
 	//deliveryV1 "tasks/api/v1"
 	"tasks/internal/domain/email"
-	"tasks/tasks"
 )
 
 //type DeliveryPayload struct {
@@ -26,7 +27,7 @@ import (
 //    1. msgpack
 //    2. json
 //    3. protobuf
-func NewEmailDeliveryTask(req email.RefereeRequest) (*asynq.Task, error) {
+func NewEmailDeliveryTask(ctx context.Context, req email.RefereeRequest) (*asynq.Task, error) {
 	// Using msgpack encode the struct to smaller size, thus saving RAM in Redis
 	// server.
 	// But you cannot inspect a msgpack encoded binary in asynqmon
@@ -59,5 +60,8 @@ func NewEmailDeliveryTask(req email.RefereeRequest) (*asynq.Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	return asynq.NewTask(tasks.TypeEmailDelivery, payload), nil
+
+	// It is possible to schedule periodic tasks
+	// https://github.com/hibiken/asynq/wiki/Periodic-Tasks
+	return asynq.NewTask(task.TypeEmailDelivery, payload), nil
 }

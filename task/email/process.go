@@ -3,6 +3,7 @@ package email
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"tasks/internal/domain/email"
 
 	"log"
@@ -25,6 +26,8 @@ type Processor struct {
 	db *sqlx.DB
 }
 
+// NewEmailProcessor is constructor that allows us to inject any dependencies
+// required by our ProcessTask method.
 func NewEmailProcessor(db *sqlx.DB) *Processor {
 	// ... return an instance
 	return &Processor{
@@ -32,6 +35,8 @@ func NewEmailProcessor(db *sqlx.DB) *Processor {
 	}
 }
 
+// ProcessTask is a method of Processor struct, which implements Handler
+// interface.
 func (p Processor) ProcessTask(ctx context.Context, task *asynq.Task) error {
 	// example decoding a protobuf encoded payload
 	//var p delivery_v1.Delivery
@@ -52,15 +57,15 @@ func (p Processor) ProcessTask(ctx context.Context, task *asynq.Task) error {
 	//	return fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
 	//}
 
+	log.Printf("Task ID: %s Sending Email to User: user_id=%d, From=%d", task.ResultWriter().TaskID(), r.Parameters.To, r.SentByUserID)
+
 	// Email delivery code ...
 
-	log.Printf("Sending Email to User: user_id=%d, From=%d", r.Parameters.To, r.SentByUserID)
-
-	log.Println(task.ResultWriter().TaskID())
-
-	_, err := p.db.ExecContext(ctx, "SELECT true;")
+	// sleep 60 seconds to simulate (hard) work.
+	_, err := p.db.ExecContext(ctx, "SELECT SLEEP(60);")
 	if err != nil {
-		log.Println("error performing database operation: %w", err)
+		log.Printf("error performing database operation: %v\n", err)
+		return fmt.Errorf("database error: %w", err)
 	}
 
 	log.Printf("Completed Processing Task ID: %v", task.ResultWriter().TaskID())

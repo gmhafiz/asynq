@@ -6,6 +6,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Configs is the main struct that holds all other configuration structs. It
+// serves as the main entry to all other configuration types.
 type Configs struct {
 	Api      Api
 	Database Database

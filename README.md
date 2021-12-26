@@ -33,6 +33,15 @@ Add to `PATH`
 
     export PATH="$PATH:$(go env GOPATH)/bin"
 
+## (Optional) Linting
+
+Linting check code quality with `golangci-lint` and `gosec`
+
+Install
+
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+    go install github.com/securego/gosec/v2/cmd/gosec@latest
+
 # Run
 
  - (Optional) Database
@@ -90,10 +99,11 @@ Or one-liner
 
 Send a task by sending an http request to a Producer. In production, send the request to a load balancer that does reverse proxy between your producers.
 
-    curl --location --request POST 'http://0.0.0.0:4001/api/v1/email' \
+    curl -v --location --request POST 'http://0.0.0.0:4001/api/v1/email' \
     --header 'Content-Type: application/json' \
+    --header 'X-Request-ID: a835b85b-6d09-4898-8bbd-1bb1406151f5' \
     --data-raw '{
-        "sentBy":1,
+        "sent_by":1,
         "type":"email:deliver",
         "email":{
             "to":2,
@@ -101,8 +111,6 @@ Send a task by sending an http request to a Producer. In production, send the re
             "content":"test content"
         }
     }'
-
-
 
 ## Consumer
 
