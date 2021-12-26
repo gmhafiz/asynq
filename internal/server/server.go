@@ -14,6 +14,7 @@ import (
 	chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	redisLib "github.com/go-redis/redis/v8"
 	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
 
@@ -23,22 +24,35 @@ import (
 	"tasks/third_party/validate"
 )
 
+// Server struct holds all dependency reference required in this microservice.
+// From the necessary httpServer, router, and asynq library to optional
+// dependencies like the database.
 type Server struct {
 	cfg            *configs.Configs
 	db             *sqlx.DB
-	redis          *asynq.Client
+	asynq          *asynq.Client
+	srv            *asynq.Server
+	redisClientOpt asynq.RedisClientOpt
+	redis          *redisLib.Client
 	router         *chi.Mux
 	httpServer     *http.Server
 	validator      *validator.Validate
-	redisClientOpt asynq.RedisClientOpt
-	srv            *asynq.Server
 }
 
+// New is a constructor that returns a Server struct.
 func New(version string) *Server {
 	log.Printf("Starting API version: %s\n", version)
 	return &Server{}
 }
 
+// Init initializes all dependencies. Order of initialization is important.
+// Configuration parsing is usually the first thing that happens so that all
+// other dependencies can be configured correctly.
+// GlobalMiddlewares happens before route registration and after router
+// initialization.
+//
+// To register new tasks, figure out which domain it belongs to, create if it
+// does not exist yet. initDomain() is usually done last.
 func (s *Server) Init() {
 	s.newConfig()
 	s.newDatabase()
@@ -49,26 +63,44 @@ func (s *Server) Init() {
 	s.initDomains()
 }
 
-func (s *Server) Run() error {
+// Run runs the server. There is a graceful shutdown mechanism that listens
+// to operating system signals.
+func (s *Server) Run() {
 	s.httpServer = &http.Server{
-		Addr:           fmt.Sprintf("%s:%d", s.cfg.Api.Host, s.cfg.Api.Port),
-		Handler:        s.router,
-		ReadTimeout:    s.cfg.Api.ReadTimeout,
-		WriteTimeout:   s.cfg.Api.WriteTimeout,
-		MaxHeaderBytes: 1 << 20,
+		Addr:              fmt.Sprintf("%s:%d", s.cfg.Api.Host, s.cfg.Api.Port),
+		Handler:           s.router,
+		ReadTimeout:       s.cfg.Api.ReadTimeout * time.Second,
+		WriteTimeout:      s.cfg.Api.WriteTimeout * time.Second,
+		IdleTimeout:       s.cfg.Api.IdleTimeout * time.Second,
+		ReadHeaderTimeout: s.cfg.Api.ReadHeaderTimeout * time.Second,
+		MaxHeaderBytes:    1 << 20,
 	}
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
+	// errs is an unbuffered channel that holds all errors of our go-routines.
+	errs := make(chan error)
 
+	// Launc go routine that starts the Producer API
 	go func() {
 		log.Printf("Serving at %s:%d\n", s.cfg.Api.Host, s.cfg.Api.Port)
 		printAllRegisteredRoutes(s.router)
-		err := s.httpServer.ListenAndServe()
-		if err != nil {
-			log.Fatal(err)
-		}
+		errs <- s.httpServer.ListenAndServe()
+		err := <-errs
+		log.Fatal(err)
 	}()
+
+	// Launch another go routine that listens to operating signal for
+	// termination.
+	go func() {
+		errs <- gracefulShutdown(context.Background(), s)
+	}()
+
+	err := <-errs
+	log.Fatal(err)
+}
+
+func gracefulShutdown(ctx context.Context, s *Server) error {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
 
 	<-quit
 
@@ -82,8 +114,11 @@ func (s *Server) Run() error {
 	}()
 	<-done
 
-	ctx, shutdown := context.WithTimeout(context.Background(), s.cfg.Api.IdleTimeout*time.Second)
+	ctx, shutdown := context.WithTimeout(ctx, s.cfg.Api.IdleTimeout*time.Second)
 	defer shutdown()
+
+	// Close any other opened resources here
+	_ = s.DB().Close()
 
 	return s.httpServer.Shutdown(ctx)
 }
@@ -108,6 +143,7 @@ func (s *Server) newRouter() {
 	s.router = chi.NewRouter()
 }
 
+// setGlobalMiddleware is where all Handlers (controllers) will go through.
 func (s *Server) setGlobalMiddleware() {
 	s.router.Use(middleware.Json)
 	s.router.Use(middleware.Cors)
@@ -117,6 +153,7 @@ func (s *Server) setGlobalMiddleware() {
 	s.router.Use(middleware.Recovery)
 }
 
+// initDomains groups your tasks into domains.
 func (s *Server) initDomains() {
 	s.initHealth()
 	s.initEmail()
@@ -128,19 +165,20 @@ func (s *Server) newAsynq() {
 	srv := &asynq.Server{} //nolint:staticcheck
 
 	cfg := asynq.Config{
-		// Specify how many concurrent workers to use
-		Concurrency: 10,
+		// Specify how many concurrent workers to use. Ideally the number is
+		// number of threads + spindle cont
+		Concurrency: 12,
 		// Optionally specify multiple queues with different priority.
 		Queues: map[string]int{
-			"critical": 6,
-			"default":  3,
+			"critical": 7,
+			"default":  4,
 			"low":      1,
 		},
 	}
 
 	if s.cfg.Redis.Addresses != "" {
 		srv = asynq.NewServer(
-			// (Option 1) for connecting to the Redis cluster
+			// (Option 1) for connecting to the Redis cluster (Default)
 			asynq.RedisClusterClientOpt{Addrs: strings.Split(s.cfg.Redis.Addresses, ",")},
 			cfg,
 		)
@@ -154,7 +192,7 @@ func (s *Server) newAsynq() {
 		log.Fatal("must set redis credentials")
 	}
 
-	s.redis = asynq.NewClient(s.redisClientOpt)
+	s.asynq = asynq.NewClient(s.redisClientOpt)
 	s.srv = srv
 }
 
@@ -174,6 +212,10 @@ func (s *Server) Config() *configs.Configs {
 
 func (s *Server) DB() *sqlx.DB {
 	return s.db
+}
+
+func (s *Server) Redis() *redisLib.Client {
+	return s.redis
 }
 
 func (s *Server) AsynqServer() *asynq.Server {
