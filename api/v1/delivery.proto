@@ -1,19 +1,63 @@
 // Usage:
-//    make compile
+//    make proto
+
 syntax = "proto3";
 
+// Package api.v1 defines various messages that can be used by these
+// microservices. You may either write protobuf definitions here for easier
+// inter-language usage, or write the model structs manually like in
+// internal/domain/email/request.go
+//
+// If you choose to use protobuf, run `make proto` and it generates both Go
+// structs and php classes in the same directory: `delivery.pb.go`.
+//
+// You may consider moving the whole api folder into its own repository so that
+// each project can import the generated files for consistency.
 package api.v1;
 
 option go_package = "tasks/delivery_v1";
 
-message Delivery {
-  int64 sentBy = 1;
-  string type = 2;
-  email email = 3;
+// Request is a common message used by all incoming messages. Typically, you
+// want to embed this in your own custom message. See RefereeRequest.
+message Request {
+
+  // SentByUserID keeps track of who is sending the message
+  uint64 SentByUserID = 1;
+
+  // Type tells what kind of UoW it is. They are defined by constants in
+  // task/tasks.go and must be followed by all services using this Producer
+  // api.
+  string Type = 2;
+
+  // UUID defines a unique ID sent by client. We can send it by header
+  // request, or as part oj JSON payload.
+  // This field is important to ensure deduplication in the event of client
+  // retries.
+  string UUID = 3;
 }
 
-message email {
-  string subject = 1;
-  string content = 2;
-  int64 to = 3;
+// Email is a custom message concerned with just Email parameters.
+message Email {
+
+  // To is the ID of the user to be sent to
+  int64 To = 1;
+
+  // Subject is the Email subject
+  string Subject = 2;
+
+  // Content is the text to be sent in the body of an email
+  string Content = 3;
+}
+
+// RefereeRequest user request is parsed using this message.
+// Other Unit of Work (UoW) will also embed Request message.
+// Other parameters are then defined is their own field, in this case an Email
+// message
+message RefereeRequest {
+
+  // The compulsory common Request message
+  Request request = 1;
+
+  // Specific parameters that RefereeRequest needs, in this case, Email message
+  Email Parameters = 2;
 }
