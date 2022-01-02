@@ -3,12 +3,13 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
-	"log"
-	"time"
 
 	"tasks/internal/domain/email"
+	"tasks/internal/queue"
 	emailTask "tasks/task/email"
 )
 
@@ -46,7 +47,7 @@ func (u *Email) Send(ctx context.Context, req email.RefereeRequest) error {
 
 	// This is where it enqueues the task to Redis where a consumer will pick
 	// up.
-	// EnqueueContext() accepts a variadic third parameter. You can give it a
+	// Enqueue()  accepts a variadic third parameter. You can give it a
 	// timeout, retry, schedule it to process after a certain duration, unique
 	// or schedule it to send at a certain time.
 	// Unique:
@@ -56,10 +57,7 @@ func (u *Email) Send(ctx context.Context, req email.RefereeRequest) error {
 	// lock on the UUID key.
 	// Retention() keeps the UUID in Redis thus preventing the same request with
 	// the same UUID to be run again.
-	info, err := u.asynqClient.EnqueueContext(ctx, task,
-		asynq.TaskID(req.UUID),
-		asynq.Retention(5*time.Minute),
-	)
+	info, err := queue.Enqueue(ctx, u.asynqClient, task, req.UUID)
 	if err != nil {
 		return fmt.Errorf("could not enqueue task: %w", err)
 	}

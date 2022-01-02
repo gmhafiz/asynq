@@ -118,7 +118,7 @@ The consumer server(s) will automatically pick up the task from Redis.
 
 # Monitor
 
-Run `asynq stats` or [`asynqmon`](#asynqmon) [http://localhost:8080/](http://localhost:8080/) and you will see tasks being process, succeeded, or failed tasks.
+Run `asynq stats` or [`asynqmon`](#asynqmon) [http://localhost:8080/](http://localhost:8080/) and, you will see tasks being process, succeeded, or failed tasks.
 
 ![inspect-payload](assets/asynqmon-inspect-payload.png)
 Payload can be inspected in this asynqmon web UI if payload is serialized with JSON.
@@ -142,7 +142,18 @@ Run
 
     asynqmon
 
+# Create New Task
+
+To create a new task, there are three components that needs to be set up. Optionally, define a constant for this task in `task/tasks.go` file.
+
+1. (Optional) Create a new const
+
+```go
+const TypeLongRunningWork = "test:heavy-work"
+```
     
+2. Reg
+
 # Git hooks
 
 Add git hooks by registering the path to `.git-hooks` folder

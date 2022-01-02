@@ -18,7 +18,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
 
-	"tasks/configs"
+	"tasks/config"
 	"tasks/internal/middleware"
 	db "tasks/third_party/database"
 	"tasks/third_party/validate"
@@ -28,7 +28,7 @@ import (
 // From the necessary httpServer, router, and asynq library to optional
 // dependencies like the database.
 type Server struct {
-	cfg            *configs.Configs
+	cfg            *config.Config
 	db             *sqlx.DB
 	asynq          *asynq.Client
 	srv            *asynq.Server
@@ -74,13 +74,9 @@ func (s *Server) InitConsumer() {
 // to operating system signals.
 func (s *Server) Run() {
 	s.httpServer = &http.Server{
-		Addr:              fmt.Sprintf("%s:%d", s.cfg.Api.Host, s.cfg.Api.Port),
-		Handler:           s.router,
-		ReadTimeout:       s.cfg.Api.ReadTimeout * time.Second,
-		WriteTimeout:      s.cfg.Api.WriteTimeout * time.Second,
-		IdleTimeout:       s.cfg.Api.IdleTimeout * time.Second,
-		ReadHeaderTimeout: s.cfg.Api.ReadHeaderTimeout * time.Second,
-		MaxHeaderBytes:    1 << 20,
+		Addr:           fmt.Sprintf("%s:%d", s.cfg.Api.Host, s.cfg.Api.Port),
+		Handler:        s.router,
+		MaxHeaderBytes: 1 << 20,
 	}
 
 	// errs is an unbuffered channel that holds all errors of our go-routines.
@@ -121,7 +117,7 @@ func gracefulShutdown(ctx context.Context, s *Server) error {
 	}()
 	<-done
 
-	ctx, shutdown := context.WithTimeout(ctx, s.cfg.Api.IdleTimeout*time.Second)
+	ctx, shutdown := context.WithTimeout(ctx, 8*time.Second)
 	defer shutdown()
 
 	// Close any other opened resources here
@@ -131,7 +127,7 @@ func gracefulShutdown(ctx context.Context, s *Server) error {
 }
 
 func (s *Server) newConfig() {
-	s.cfg = configs.New()
+	s.cfg = config.New()
 }
 
 func (s *Server) newDatabase() {
@@ -213,7 +209,7 @@ func printAllRegisteredRoutes(router *chi.Mux) {
 	}
 }
 
-func (s *Server) Config() *configs.Configs {
+func (s *Server) Config() *config.Config {
 	return s.cfg
 }
 
