@@ -97,7 +97,15 @@ May also set different `API_PORT` for multiple consumers.
 
 # Gracefully Shutdown
 
-Two ways to gracefully shutdown:
+Since both, especially consumer API contains long-running tasks, it is important
+that we do not suddenly terminate those running tasks. Both producer and
+consumer APIs intercepts operating system signal for termination and immediately
+blocks any new requests or popping of queue from Redis. It then waits for 8
+seconds to allow pending tasks to complete. If there are tasks still not
+completed, it is re-enqueued to Redis to be picked by other API, or the same
+API when it is restarted.
+
+There are two ways to gracefully shutdown:
 
 1. Press Ctrl+C in the terminal window where you started the service.
 
@@ -173,7 +181,14 @@ To create a new task, there are two ways to do it, using CLI command or manually
 
 To use CLI, install the program with
 
-    go install https://github.com/gmhafiz/asynq/cmd/asynqgen@latest
+    # If you haven't
+    git clone git@github.com:gmhafiz/asynq.git && cd asynq
+
+    make cli
+
+Then move the binary to your `$PATH`. For example
+
+    mv ./bin/asynqgen ~/.local/bin/asynqgen
 
 Check with
 

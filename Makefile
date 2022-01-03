@@ -18,9 +18,12 @@ lint:
 	golangci-lint run
 	gosec ./...
 
-build:
-	CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o ./bin/prodcuer ./cmd/producer/main.go
+build: cli
+	CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o ./bin/producer ./cmd/producer/main.go
 	CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o ./bin/consumer ./cmd/consumer/main.go
+
+cli:
+	CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o ./bin/asynqgen ./cmd/asynqgen/main.go
 
 check: proto lint test
 
