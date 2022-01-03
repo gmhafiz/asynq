@@ -15,6 +15,8 @@ package task
 // You use the constant in many places, when scheduling a new task, registering
 // it in the mux.
 const (
+	//generate:asynq:gen
+
 	// TypeLongRunningWork simulates a long-running hard work.
 	TypeLongRunningWork = "test:heavy-work"
 
@@ -22,7 +24,7 @@ const (
 	TypeEmailDelivery = "email:deliver"
 )
 
-// Request is a common struct used by all incoming messages. Typically, you
+// Request is a shared struct used by all incoming messages. Typically, you
 // want to embed this struct in your own.
 //
 // For example:

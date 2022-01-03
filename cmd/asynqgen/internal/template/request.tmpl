@@ -1,0 +1,28 @@
+package {{ .DomainLowerCase }}
+
+import (
+	"encoding/json"
+	"io"
+
+	"tasks/task"
+)
+
+// {{ .Domain }} is a custom struct concerned with just {{ .Domain }} parameters.
+type {{ .Domain }} struct {
+	// add your field(s)
+}
+
+type Request struct {
+
+	// The compulsory common Request struct
+	task.Request
+
+	// Specific parameters that Request needs
+	Parameters {{ .Domain }} `json:"{{ .DomainLowerCase }}" validate:"required"`
+}
+
+// Bind is a convenience function to parse incoming user request in JSON format
+// to our custom request struct.
+func Bind(body io.ReadCloser, b *Request) error {
+	return json.NewDecoder(body).Decode(b)
+}

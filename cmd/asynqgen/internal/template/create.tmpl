@@ -1,0 +1,23 @@
+package {{ .DomainLowerCase }}
+
+import (
+	"context"
+	"encoding/json"
+
+	"github.com/hibiken/asynq"
+
+	"{{ .ModuleName }}/internal/domain/{{ .DomainLowerCase }}"
+	"tasks/task"
+)
+
+func New{{ .Domain }}DeliveryTask(ctx context.Context, req {{ .DomainLowerCase }}.Request) (*asynq.Task, error) {
+
+	// A simple json.Marshal allow json values to be inspected at asynqmon
+	// at the cost of bigger RAM usage and slower serialization.
+	payload, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+    return asynq.NewTask(task.{{ .TaskConstant }}, payload), nil
+}

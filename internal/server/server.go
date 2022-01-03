@@ -20,23 +20,25 @@ import (
 
 	"tasks/config"
 	"tasks/internal/middleware"
-	db "tasks/third_party/database"
+	"tasks/third_party/database"
 	"tasks/third_party/validate"
 )
 
 // Server struct holds all dependency reference required in this microservice.
 // From the necessary httpServer, router, and asynq library to optional
-// dependencies like the database.
+// dependencies like a database.
 type Server struct {
 	cfg            *config.Config
-	db             *sqlx.DB
 	asynq          *asynq.Client
 	srv            *asynq.Server
 	redisClientOpt asynq.RedisClientOpt
-	redis          *redisLib.Client
 	router         *chi.Mux
 	httpServer     *http.Server
-	validator      *validator.Validate
+
+	// These are optional dependencies
+	db        *sqlx.DB
+	validator *validator.Validate
+	redis     *redisLib.Client
 }
 
 // New is a constructor that returns a Server struct.
@@ -55,8 +57,8 @@ func New(version string) *Server {
 // does not exist yet. initDomain() is usually done last.
 func (s *Server) Init() {
 	s.newConfig()
-	s.newDatabase()
 	s.newAsynq()
+	s.newDatabase()
 	s.newValidator()
 	s.newRouter()
 	s.setGlobalMiddleware()
@@ -134,7 +136,7 @@ func (s *Server) newDatabase() {
 	if s.cfg.Database.Driver == "" {
 		log.Fatal("please fill in database credentials in .env file")
 	}
-	s.db = db.NewSqlx(s.cfg)
+	s.db = database.NewSqlx(s.cfg)
 	s.db.SetMaxOpenConns(s.cfg.Database.MaxConnectionPool)
 }
 
@@ -154,12 +156,6 @@ func (s *Server) setGlobalMiddleware() {
 		s.router.Use(chiMiddleware.Logger)
 	}
 	s.router.Use(middleware.Recovery)
-}
-
-// initDomains groups your tasks into domains.
-func (s *Server) initDomains() {
-	s.initHealth()
-	s.initEmail()
 }
 
 func (s *Server) newAsynq() {

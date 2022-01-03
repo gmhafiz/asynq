@@ -8,6 +8,12 @@ import (
 	healthUseCase "tasks/internal/domain/health/usecase"
 )
 
+// initDomains groups your tasks into domains.
+func (s *Server) initDomains() {
+	s.initHealth()
+	s.initEmail()
+}
+
 // initHealth is a method of Server struct.
 // It tends to be simple and the only dependency is a database connection pool
 // where it checks whether  this API still has a connection to it.

@@ -14,6 +14,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/joho/godotenv v1.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/rogpeppe/go-internal v1.8.0
 	github.com/spf13/cobra v1.3.0
 	google.golang.org/protobuf v1.27.1
 )

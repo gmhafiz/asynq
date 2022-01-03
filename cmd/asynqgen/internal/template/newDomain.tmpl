@@ -1,0 +1,6 @@
+// init{{ .Domain }} is a method of Server struct.
+// Inject any dependencies from a field in that struct as a parameter
+func (s *Server) init{{ .Domain }}() {
+	new{{ .Domain }}UseCase := {{ .DomainLowerCase }}UseCase.New(s.asynq, s.DB())
+	{{ .DomainLowerCase }}Handler.RegisterHTTPEndPoints(s.router, s.validator, new{{ .Domain }}UseCase)
+}
