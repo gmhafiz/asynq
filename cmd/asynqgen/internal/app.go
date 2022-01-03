@@ -5,7 +5,6 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"github.com/rogpeppe/go-internal/modfile"
 	"io/fs"
 	"io/ioutil"
 	"log"
@@ -14,6 +13,8 @@ import (
 	"path"
 	"strings"
 	"text/template"
+
+	"github.com/rogpeppe/go-internal/modfile"
 )
 
 var (
@@ -120,15 +121,6 @@ func (a *App) CreateFile(fileName string) (*os.File, error) {
 	return file, nil
 }
 
-func inArray(blacklist []string, name string) bool {
-	for _, i := range blacklist {
-		if i == name {
-			return true
-		}
-	}
-	return false
-}
-
 func (a *App) InjectTaskConstantName() error {
 	const taskListFile = "task/tasks.go"
 	const injectImport = "//generate:asynq:gen"
@@ -166,10 +158,32 @@ func (a *App) InjectTaskConstantName() error {
 	return nil
 }
 
-func (a *App) InjectDomainRegistration() error {
-	const initDomainsFile = "internal/server/initDomains.go"
-	const importLine = "import ("
-	const callFunc = "func (s *Server) initDomains() {"
+func (a *App) InjectTask() error {
+
+	if err := a.updateInitDomains(); err != nil {
+		return err
+	}
+
+	if err := a.updateConsumerMux(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *App) GoFmt() error {
+	command := exec.Command("go", "fmt", "./...")
+	_ = command.Run()
+
+	return nil
+}
+
+func (a *App) updateInitDomains() error {
+	const (
+		initDomainsFile = "internal/server/initDomains.go"
+		importLine      = "import ("
+		callFunc        = "func (s *Server) initDomains() {"
+	)
 
 	checkDomainRegistration := fmt.Sprintf("\"tasks/internal/domain/%s/", a.Project.DomainLowerCase)
 
@@ -200,38 +214,80 @@ func (a *App) InjectDomainRegistration() error {
 		log.Fatal(err)
 	}
 
-	var newFile []string
+	var newInitDomainsFile []string
 	temp := strings.Split(string(fileContent), "\n")
 	for _, line := range temp {
-		newFile = append(newFile, line)
+		newInitDomainsFile = append(newInitDomainsFile, line)
 		stripped := strings.Trim(line, "\t")
 		stripped = strings.Trim(stripped, "\n")
 		if stripped == importLine {
-			newFile = append(newFile, importLines.String())
+			newInitDomainsFile = append(newInitDomainsFile, importLines.String())
 		}
 		if stripped == callFunc {
-			newFile = append(newFile, fmt.Sprintf("\ts.init%s()", a.Project.Domain))
+			newInitDomainsFile = append(newInitDomainsFile, fmt.Sprintf("\ts.init%s()", a.Project.Domain))
 		}
 	}
-	newFile = append(newFile, initLines.String())
+	newInitDomainsFile = append(newInitDomainsFile, initLines.String())
 
 	fCreate, err := os.Create(initDomainsFile)
 	if err != nil {
 		return fmt.Errorf("error opening file: %s. %w", initDomainsFile, err)
 	}
-	_, err = fCreate.WriteString(strings.Join(newFile, "\n"))
+	_, err = fCreate.WriteString(strings.Join(newInitDomainsFile, "\n"))
 	if err != nil {
 		return fmt.Errorf("error writing file: %s, %w", initDomainsFile, err)
 	}
-	return nil
 
+	return nil
 }
 
-func (a *App) GoFmt() error {
-	command := exec.Command("go", "fmt", "./...")
-	_ = command.Run()
+func (a *App) updateConsumerMux() error {
+	const (
+		importLine      = "import ("
+		consumerMuxFile = "cmd/consumer/main.go"
+		consumerMux     = "mux := asynq.NewServeMux()"
+	)
+
+	consumerFile, err := ioutil.ReadFile(consumerMuxFile)
+	if err != nil {
+		return err
+	}
+	consumerMuxLine := fmt.Sprintf("\n\tmux.Handle(task.%s, export.New%sProcessor(s.DB()))\n", a.Project.TaskConstant, a.Project.Domain)
+	if strings.Contains(string(consumerFile), consumerMuxLine) {
+		return nil
+	}
+	var newConsumerMux []string
+	temp := strings.Split(string(consumerFile), "\n")
+	for _, line := range temp {
+		newConsumerMux = append(newConsumerMux, line)
+		stripped := strings.Trim(line, "\t")
+		stripped = strings.Trim(stripped, "\n")
+		if stripped == importLine {
+			newConsumerMux = append(newConsumerMux, fmt.Sprintf("\t\"tasks/task/%s\"", a.Project.DomainLowerCase))
+		}
+		if stripped == consumerMux {
+			newConsumerMux = append(newConsumerMux, consumerMuxLine)
+		}
+	}
+	fCreate, err := os.Create(consumerMuxFile)
+	if err != nil {
+		return fmt.Errorf("error opening file: %s. %w", consumerMuxFile, err)
+	}
+	_, err = fCreate.WriteString(strings.Join(newConsumerMux, "\n"))
+	if err != nil {
+		return fmt.Errorf("error writing file: %s, %w", consumerMuxFile, err)
+	}
 
 	return nil
+}
+
+func inArray(blacklist []string, name string) bool {
+	for _, i := range blacklist {
+		if i == name {
+			return true
+		}
+	}
+	return false
 }
 
 func fileNameWithoutExtension(fileName string) string {

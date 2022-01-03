@@ -87,7 +87,7 @@ var taskCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		if err := a.InjectDomainRegistration(); err != nil {
+		if err := a.InjectTask(); err != nil {
 			log.Fatal(err)
 		}
 

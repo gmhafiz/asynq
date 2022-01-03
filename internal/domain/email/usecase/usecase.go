@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"tasks/internal/utility/queue"
 
 	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
 
 	"tasks/internal/domain/email"
-	"tasks/internal/queue"
 	emailTask "tasks/task/email"
 )
 

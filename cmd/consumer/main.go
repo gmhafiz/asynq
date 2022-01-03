@@ -2,11 +2,11 @@ package main
 
 import (
 	"log"
-	"tasks/task"
 
 	"github.com/hibiken/asynq"
 
 	"tasks/internal/server"
+	"tasks/task"
 	"tasks/task/email"
 )
 
@@ -31,8 +31,10 @@ func main() {
 
 	// mux maps a type to a handler
 	mux := asynq.NewServeMux()
+
 	// we inject database dependency into the handler
 	mux.Handle(task.TypeEmailDelivery, email.NewEmailProcessor(s.DB()))
+
 	// ...register other handlers...
 
 	if err := s.AsynqServer().Run(mux); err != nil {
