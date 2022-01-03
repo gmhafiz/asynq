@@ -27,7 +27,7 @@ import (
 //    1. msgpack
 //    2. json
 //    3. protobuf
-func NewEmailDeliveryTask(ctx context.Context, req email.RefereeRequest) (*asynq.Task, error) {
+func NewEmailDeliveryTask(ctx context.Context, req email.Request) (*asynq.Task, error) {
 	// Using msgpack encode the struct to smaller size, thus saving RAM in Redis
 	// server.
 	// But you cannot inspect a msgpack encoded binary in asynqmon

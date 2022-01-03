@@ -19,21 +19,21 @@ type Email struct {
 	Content string `json:"content" validate:"required"`
 }
 
-// RefereeRequest user request is parsed into this struct.
+// Request user request is parsed into this struct.
 // Other Unit of Work (UoW) will also embed Request struct.
 // Other parameters are then defined is their own struct, in this case an Email
 // struct
-type RefereeRequest struct {
+type Request struct {
 
 	// The compulsory common Request struct
 	task.Request
 
-	// Specific parameters that RefereeRequest needs, in this case, Email struct
+	// Specific parameters that Request needs, in this case, Email struct
 	Parameters Email `json:"email" validate:"required"`
 }
 
 // Bind is a convenience function to parse incoming user request in JSON format
 // to our custom request struct.
-func Bind(body io.ReadCloser, b *RefereeRequest) error {
+func Bind(body io.ReadCloser, b *Request) error {
 	return json.NewDecoder(body).Decode(b)
 }

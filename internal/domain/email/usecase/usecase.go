@@ -26,7 +26,7 @@ func New(client *asynq.Client, db *sqlx.DB) *Email {
 	}
 }
 
-func (u *Email) Send(ctx context.Context, req email.RefereeRequest) error {
+func (u *Email) Send(ctx context.Context, req email.Request) error {
 	log.Printf("processing: %s\n", req.UUID)
 
 	task, err := emailTask.NewEmailDeliveryTask(ctx, req)

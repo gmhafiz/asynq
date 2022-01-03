@@ -46,13 +46,13 @@ func (p Processor) ProcessTask(ctx context.Context, task *asynq.Task) error {
 	//}
 
 	// example decoding a JSON payload
-	var r email.RefereeRequest
+	var r email.Request
 	if err := json.Unmarshal(task.Payload(), &r); err != nil {
 		return err
 	}
 
 	// example decoding a msgpack encoded payload
-	//var r email.RefereeRequest
+	//var r email.Request
 	//if err := msgpack.Unmarshal(task.Payload(), &r); err != nil {
 	//	return fmt.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
 	//}

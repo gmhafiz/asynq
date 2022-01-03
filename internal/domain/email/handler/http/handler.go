@@ -47,16 +47,12 @@ func (h *Handler) Send(w http.ResponseWriter, r *http.Request) {
 	// So we make a custom struct with the fields we expect.
 	// We need to transform the stream of bytes requests by binding the json
 	// input into the struct.
-	var req email.RefereeRequest
+	var req email.Request
 	err := email.Bind(r.Body, &req)
 	if err != nil {
 		respond.Error(w, http.StatusBadRequest, nil)
 		return
 	}
-
-	// Save the request ID so that we can delete from Redis when it is
-	// successful to ensure message idempotency.
-	req.UUID = r.Header.Get("X-Request-ID")
 
 	errs := validate.Validate(h.validate, req)
 	if errs != nil {
