@@ -24,6 +24,23 @@ import (
 	"tasks/third_party/validate"
 )
 
+const (
+	QueueCritical = "critical"
+	QueueDefault  = "default"
+	QueueLow      = "low"
+)
+
+const (
+	// Specify how many concurrent workers to use. Ideally the number is
+	// number of threads + spindle count
+	workerCount = 12
+
+	// total number should be equal to workerCount
+	queueCriticalValue = 7
+	queueDefaultValue  = 3
+	queueLowValue      = 1
+)
+
 // Server struct holds all dependency reference required in this microservice.
 // From the necessary httpServer, router, and asynq library to optional
 // dependencies like a database.
@@ -164,14 +181,12 @@ func (s *Server) newAsynq() {
 	srv := &asynq.Server{} //nolint:staticcheck
 
 	cfg := asynq.Config{
-		// Specify how many concurrent workers to use. Ideally the number is
-		// number of threads + spindle cont
-		Concurrency: 12,
+		Concurrency: workerCount,
 		// Optionally specify multiple queues with different priority.
 		Queues: map[string]int{
-			"critical": 7,
-			"default":  4,
-			"low":      1,
+			QueueCritical: queueCriticalValue,
+			QueueDefault:  queueDefaultValue,
+			QueueLow:      queueLowValue,
 		},
 	}
 
